@@ -8,5 +8,5 @@ from .rating import Rating
 from .review import Review
 from .user import User
 from .watchlist import WatchlistItem
-
-__all__ = ["Movie", "Rating", "Review", "User", "UserPreferences", "WatchlistItem"]
+from .movie_stats import MovieStats
+__all__ = ["Movie", "Rating", "Review", "User", "UserPreferences", "WatchlistItem", "MovieStats"]
