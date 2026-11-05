@@ -1,0 +1,5 @@
+# local database, logs and tooling (backend only)
+instance/
+logs/
+.venv/
+.pytest_cache/
