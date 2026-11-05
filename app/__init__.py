@@ -1,11 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
 
+from . import models  # noqa: F401  (registers every table with SQLAlchemy and the migrations)
 from .blueprints import register_blueprints
 from .config import Config
 from .extensions import db, migrate
-
-# API-02 adds `from . import models` here so every table is registered with the migrations.
 
 
 def create_app(config_class=Config):
