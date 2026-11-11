@@ -1,5 +1,5 @@
 from sqlalchemy import func
-from app.models.base import db
+from app.extensions import db
 from app.models.rating import Rating 
 from app.models.movie_stats import MovieStats
 from app.services.ranking import bayesian_score
