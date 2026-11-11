@@ -3,3 +3,25 @@ instance/
 logs/
 .venv/
 .pytest_cache/
+
+# secrets
+.env
+*.env
+!.env.example
+
+# python
+venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+
+# node
+node_modules/
+dist/
+
+# editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

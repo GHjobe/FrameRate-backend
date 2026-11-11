@@ -1,9 +1,10 @@
 # FrameRate backend (Flask)
 
+This is the backend repo. The frontend lives in its own repo, `FrameRate-frontend`.
+
 ## Run it (Windows Command Prompt)
 
 ```
-cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
@@ -12,18 +13,27 @@ flask db upgrade
 python run.py
 ```
 
-Then open http://127.0.0.1:5000/api/health. You should see `"status": "ok"` and `"database": "ok"`.
+Run these from the repo root. Then open http://127.0.0.1:5000/api/health. You should see `"status": "ok"` and `"database": "ok"`.
 
 - `copy .env.example .env` is only needed once. Put your own values in `.env` (it is never committed).
-- `flask db upgrade` creates the local database in `backend/instance/` (never committed).
-- Run the tests with `pytest` from the `backend` folder.
-- To start over with an empty database: stop the server, delete `backend\instance\framerate.db`, run `flask db upgrade`.
-- The old `backend/app.py` is replaced by `run.py`. The new command is `python run.py`.
+- `flask db upgrade` creates the local database in `instance/` (never committed).
+- Run the tests with `pytest` from the repo root.
+- To start over with an empty database: stop the server, delete `instance\framerate.db`, run `flask db upgrade`.
+- The old `app.py` was replaced by `run.py`. The start command is `python run.py`.
+
+## Connecting the frontend
+
+The two repos talk over HTTP, so run both at the same time.
+
+- The backend runs at http://127.0.0.1:5000 (use `localhost:5000` in the frontend so cookies work).
+- The frontend runs at http://localhost:5173. This address is allowed by `CORS_ORIGINS` in `.env`.
+- The frontend sends requests with `withCredentials: true`, because login uses a session cookie.
+- Open the frontend and call the backend with the same hostname (`localhost` for both, or `127.0.0.1` for both).
 
 ## Folder map
 
 ```
-backend/
+FrameRate-backend/
   run.py                  starts the server (python run.py)
   .flaskenv               tells the flask command where the app is
   pytest.ini              test settings
@@ -35,6 +45,7 @@ backend/
     blueprints/           one file per feature's routes
     utils/                security helpers and validators     (Dev 4)
     services/             ranking and recommendation logic    (Dev 5)
+  docs/                   database-schema.md (table diagram)
   migrations/             database change history (commit these files)
   tests/                  pytest tests
 ```
@@ -47,7 +58,7 @@ backend/
 | Security, validation, error handling, logging, preferences | Dev 4 | `app/utils/`, `blueprints/preferences.py` (error-handler and logging files: Dev 4 decides the names) |
 | Ranking, ratings, reviews, watchlist | Dev 5 | `app/services/`, `blueprints/ratings.py`, `reviews.py`, `watchlist.py` |
 
-Every blueprint already exists as an empty file, so you add routes without touching `__init__.py`.
+Every blueprint already exists as a file, so you add routes without touching `__init__.py`.
 Dev 4 only needs to add two lines in `app/__init__.py`, at the comment marked `SEC-02`.
 
 ## Changing the database
@@ -58,10 +69,13 @@ Dev 4 only needs to add two lines in `app/__init__.py`, at the comment marked `S
 4. Run `flask db upgrade`, then `pytest`, then commit the model change **and** the migration file together.
 
 Rules:
+- Import the database object with `from app.extensions import db`.
+- The `movies` table uses `tmdb_id` as its primary key (there is no `movies.id`).
 - Never edit a migration that has been merged. Add a new one.
 - If Git or Flask complains about "multiple heads" (two people made a migration at the same time), run
   `flask db merge heads -m "merge heads"` and commit the result.
 - After pulling someone else's migration, run `flask db upgrade`.
+- Run `pytest` before every push.
 
 ## Decisions made in the schema
 
