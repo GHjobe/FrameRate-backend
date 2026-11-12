@@ -27,6 +27,10 @@ class Config:
     # Read by the TMDB wrapper (API-03). Never sent to the frontend.
     TMDB_READ_TOKEN = os.getenv("TMDB_READ_TOKEN", "")
 
+    TMDB_BASE_URL = "https://api.themoviedb.org/3"
+    TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p"
+    TMDB_TIMEOUT = 8  # tmdb response wait
+    MOVIE_CACHE_DAYS = 7  # movie cache fresh
 
 class TestingConfig(Config):
     TESTING = True
