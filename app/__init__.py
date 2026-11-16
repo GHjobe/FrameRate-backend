@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 from . import models  # noqa: F401  (registers every table with SQLAlchemy and the migrations)
 from .blueprints import register_blueprints
-from .config import Config
+from .config import Config, check_settings
 from .extensions import db, migrate
 
 
@@ -11,6 +11,9 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    if not app.config["TESTING"]:
+        check_settings(app.config)
+        
     db.init_app(app)
     migrate.init_app(app, db, directory=app.config["MIGRATIONS_DIR"], render_as_batch=True)
 
