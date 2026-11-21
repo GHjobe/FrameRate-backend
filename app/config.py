@@ -32,7 +32,13 @@ class Config:
     TMDB_TIMEOUT = _int("TMDB_TIMEOUT")  # seconds to wait for TMDB
     MOVIE_CACHE_DAYS = _int("MOVIE_CACHE_DAYS")  # how long cached movie details count as fresh
 
-    # Not environment settings: a framework switch and a path computed from where the code lives.
+    # Login sessions (API-04)
+    SESSION_LIFETIME_DAYS = _int("SESSION_LIFETIME_DAYS")  # how long a login lasts
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "").lower() == "true"  # true only on https
+
+    # Not environment settings: fixed security switches, a framework switch and a computed path.
+    SESSION_COOKIE_HTTPONLY = True  # JavaScript cannot read the login cookie
+    SESSION_COOKIE_SAMESITE = "Lax"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MIGRATIONS_DIR = str(BASE_DIR / "migrations")
 
@@ -47,6 +53,8 @@ class TestingConfig(Config):
     TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p"
     TMDB_TIMEOUT = 8
     MOVIE_CACHE_DAYS = 7
+    SESSION_LIFETIME_DAYS = 7
+    SESSION_COOKIE_SECURE = False
 
 
 # config setting name -> the line it comes from in .env
@@ -58,6 +66,7 @@ REQUIRED_SETTINGS = {
     "TMDB_IMAGE_BASE": "TMDB_IMAGE_BASE",
     "TMDB_TIMEOUT": "TMDB_TIMEOUT",
     "MOVIE_CACHE_DAYS": "MOVIE_CACHE_DAYS",
+    "SESSION_LIFETIME_DAYS": "SESSION_LIFETIME_DAYS",
 }
 
 

@@ -84,3 +84,23 @@ Rules:
 - **Movies table is a cache** of TMDB data. Update its rows, never delete them: ratings and watchlist entries point to it. A movie must be saved in this table before it can be rated or added to a watchlist.
 - **Ratings have a status** (`active`, `quarantined`, `removed`). Rankings must count `active` ratings only.
 - **Usernames and emails are unique ignoring case.**
+
+
+## API endpoints so far
+
+| Method and path | What it does | Owner |
+|---|---|---|
+| `GET /api/health` | Server and database check | Dev 3 |
+| `GET /api/movies/search?q=...&page=1` | Search TMDB; returns `{results, page, totalPages, totalResults, cached}` | Dev 3 |
+| `GET /api/movies/<tmdb_id>` | Movie details (cached in the `movies` table) | Dev 3 |
+| `POST /api/auth/register` | Create an account and sign in; body `{username, email, password}` | Dev 3 |
+| `POST /api/auth/login` | Sign in; body `{email (or username), password}` | Dev 3 |
+| `POST /api/auth/logout` | Sign out (204) | Dev 3 |
+| `GET /api/auth/me` | The signed-in user, or 401 | Dev 3 |
+
+The user object is `{id, username, email, role, emailVerified, onboardingCompleted}`.
+Errors are `{"error": {"code", "message", "fields"}}`.
+The frontend must send requests with `withCredentials: true` so the login cookie is kept.
+Login is a session cookie holding `session["user_id"]`.
+Dev 5: call `get_or_fetch_movie(tmdb_id)` from `app/services/tmdb.py` before saving a rating or
+watchlist entry, because the movie row must exist first.

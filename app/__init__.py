@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from flask import Flask
 from flask_cors import CORS
 
@@ -13,7 +15,10 @@ def create_app(config_class=Config):
 
     if not app.config["TESTING"]:
         check_settings(app.config)
-        
+
+    # How long a login lasts, in days (from .env).
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=app.config["SESSION_LIFETIME_DAYS"])
+
     db.init_app(app)
     migrate.init_app(app, db, directory=app.config["MIGRATIONS_DIR"], render_as_batch=True)
 
