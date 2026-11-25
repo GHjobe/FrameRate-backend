@@ -15,7 +15,7 @@ def get_top_rated():
     data = []
     for movie, stats in movies:
         data.append({
-            "id": movie.id,
+            "id": movie.tmdb_id,
             "title": movie.title,
             "score": stats.bayesian_rating,
             "votes": stats.total_votes
