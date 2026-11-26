@@ -1,21 +1,27 @@
 """Authentication routes: register, login, logout, me. Owner: Dev 3 (API-04).
 
+These routes only handle the web request: read the data, check it, call app/services/
+auth_service.py for anything that touches the database, and build the response.
+
 Login is a Flask session cookie that stores the user's id under the key "user_id".
 Dev 4 (SEC-03): read session["user_id"] in @login_required.
 
-Hashing and the password policy come from Dev 4's app/utils/security.py. The username and
-email checks below are kept here until app/utils/errors.py (SEC-02) is on main, so that
-validate_register and validate_login from app/utils/validators.py can replace them."""
+The password policy comes from Dev 4's app/utils/security.py. The username and email checks
+below are kept here until app/utils/errors.py (SEC-02) is on main, so that validate_register
+and validate_login from app/utils/validators.py can replace them."""
 import re
 
 from flask import Blueprint, jsonify, request, session
-from sqlalchemy import func, or_
-from sqlalchemy.exc import IntegrityError
 
 from app.api_errors import api_error
-from app.extensions import db
-from app.models import User
-from app.utils.security import check_password_policy, hash_password, verify_password
+from app.services.auth_service import (
+    DuplicateUserError,
+    authenticate,
+    create_user,
+    find_taken_fields,
+    get_user,
+)
+from app.utils.security import check_password_policy
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -79,20 +85,13 @@ def register():
     if fields:
         return _validation_error(fields)
 
-    taken = {}
-    if db.session.query(User.id).filter(func.lower(User.username) == username.lower()).first():
-        taken["username"] = "That username is already taken."
-    if db.session.query(User.id).filter(func.lower(User.email) == email).first():
-        taken["email"] = "That email is already registered."
+    taken = find_taken_fields(username, email)
     if taken:
         return api_error("CONFLICT", "Some details are already in use.", 409, taken)
 
-    user = User(username=username, email=email, password_hash=hash_password(password))
-    db.session.add(user)
     try:
-        db.session.commit()
-    except IntegrityError:  # two people registering the same name at the same moment
-        db.session.rollback()
+        user = create_user(username, email, password)
+    except DuplicateUserError:  # two people registering the same name at the same moment
         return api_error("CONFLICT", "That username or email is already in use.", 409)
 
     _sign_in(user)
@@ -106,7 +105,7 @@ def login():
         return api_error("VALIDATION", "Send the form as JSON.", 400)
 
     # The frontend can send the email or the username, in any of these fields.
-    identifier = (_text(data, "email") or _text(data, "username") or _text(data, "identifier")).strip().lower()
+    identifier = (_text(data, "email") or _text(data, "username") or _text(data, "identifier")).strip()
     password = _text(data, "password")
 
     fields = {}
@@ -117,13 +116,9 @@ def login():
     if fields:
         return _validation_error(fields)
 
-    user = (
-        db.session.query(User)
-        .filter(or_(func.lower(User.email) == identifier, func.lower(User.username) == identifier))
-        .first()
-    )
+    user = authenticate(identifier, password)
     # One message for "no such user" and "wrong password", so nobody can probe which accounts exist.
-    if user is None or not verify_password(password, user.password_hash):
+    if user is None:
         return api_error("INVALID_CREDENTIALS", "Wrong email or password.", 401)
 
     _sign_in(user)
@@ -138,8 +133,7 @@ def logout():
 
 @bp.get("/me")
 def me():
-    user_id = session.get("user_id")
-    user = db.session.get(User, user_id) if user_id else None
+    user = get_user(session.get("user_id"))
     if user is None:
         session.clear()
         return api_error("UNAUTHENTICATED", "You are not logged in.", 401)
